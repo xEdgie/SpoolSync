@@ -21,5 +21,13 @@ export interface FilamentProfile {
 		| "Slope Lift"
 		| "Spiral Lift"
 		| string;
+	// Cooling
+	fanSpeedMin?: number;
+	fanSpeedMax?: number;
+	minFanSpeedLayerTime?: number;
+
+	// Pressure Advance
+	pressureAdvance?: number;
+
 	// Add other OrcaSlicer specific fields as needed later
 }

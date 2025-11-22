@@ -17,14 +17,15 @@ export function AutoSyncProvider() {
 	useEffect(() => {
 		if (!user || !window.electron) return;
 
-		// Check if auto-sync is enabled
-		const autoSyncEnabled =
-			localStorage.getItem("autoSyncEnabled") === "true";
-		console.log("Auto-sync enabled:", autoSyncEnabled);
-		if (!autoSyncEnabled) return;
-
 		const q = query(collection(db, "users", user.uid, "filaments"));
 		const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+			// Check if auto-sync is enabled inside the callback
+			const autoSyncEnabled =
+				localStorage.getItem("autoSyncEnabled") === "true";
+			if (!autoSyncEnabled) {
+				console.log("Auto-sync is disabled, skipping sync");
+				return;
+			}
 			const profiles: FilamentProfile[] = [];
 			querySnapshot.forEach((doc) => {
 				profiles.push({ id: doc.id, ...doc.data() } as FilamentProfile);
@@ -45,9 +46,13 @@ export function AutoSyncProvider() {
 					bedTemp: p.bedTemp,
 					printerId: p.printerId,
 					printerName: p.printerName,
-          retractionLength: p.retractionLength,
-          zhopHeight: p.zhopHeight,
-          zhopType: p.zhopType,
+					retractionLength: p.retractionLength,
+					zhopHeight: p.zhopHeight,
+					zhopType: p.zhopType,
+					pressureAdvance: p.pressureAdvance,
+					fanSpeedMin: p.fanSpeedMin,
+					fanSpeedMax: p.fanSpeedMax,
+					minFanSpeedLayerTime: p.minFanSpeedLayerTime,
 				}))
 			);
 

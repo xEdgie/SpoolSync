@@ -22,9 +22,17 @@ export function generateFilamentJson(profile: FilamentProfile): string {
 		is_custom_defined: "1",
 		name: `${profile.brand} ${profile.type}`,
 		version: "1.0.0.0",
-		filament_retraction_length: [profile.retractionLength.toString()],
-		filament_z_hop: [profile.zhopHeight.toString()],
-		filament_z_hop_types: [profile.zhopType],
+		filament_retraction_length: [
+			profile.retractionLength?.toString() || "0",
+		],
+		filament_z_hop: [profile.zhopHeight?.toString() || "0"],
+		filament_z_hop_types: [profile.zhopType || "Normal Lift"],
+		pressure_advance: [profile.pressureAdvance?.toString() || "0"],
+		fan_cooling_layer_time: [
+			profile.minFanSpeedLayerTime?.toString() || "60",
+		],
+		fan_min_speed: [profile.fanSpeedMin?.toString() || "100"],
+		fan_max_speed: [profile.fanSpeedMax?.toString() || "100"],
 	};
 
 	return JSON.stringify(json, null, 2);

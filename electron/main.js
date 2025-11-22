@@ -2,12 +2,7 @@
 
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require("electron");
 const path = require("path");
-const serve = require("electron-serve");
 const fs = require("fs");
-
-const appServe = app.isPackaged
-	? serve({ directory: path.join(__dirname, "../out") })
-	: null;
 
 const createMenu = () => {
 	const template = [
@@ -51,8 +46,9 @@ const createWindow = () => {
 	});
 
 	if (app.isPackaged) {
-		appServe(win).then(() => {
-			win.loadURL("app://-");
+		const indexPath = path.join(__dirname, "../out/index.html");
+		win.loadFile(indexPath).catch((e) => {
+			console.error("Failed to load index.html:", e);
 		});
 	} else {
 		win.loadURL("http://localhost:3000");

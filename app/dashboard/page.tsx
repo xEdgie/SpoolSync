@@ -15,7 +15,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ProfileGrid } from "@/components/profile-grid";
+import { ProfileGrid } from "@/components/filament-grid";
 import { PrintersTable } from "@/components/printers-table";
 import { SyncView } from "@/components/sync-view";
 import { AutoSyncProvider } from "@/components/auto-sync-provider";
