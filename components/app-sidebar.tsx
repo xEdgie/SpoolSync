@@ -1,7 +1,11 @@
+"use client"
+
 import * as React from "react"
-import { Plus } from "lucide-react"
+import Link from "next/link"
+import { Calendar, Home, Inbox, Search, Settings, LayoutGrid, PrinterIcon, RefreshCw } from "lucide-react"
 
 import { NavUser } from "@/components/nav-user"
+import { useAuth } from "@/components/auth-provider"
 import {
   Sidebar,
   SidebarContent,
@@ -12,50 +16,64 @@ import {
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar"
 
 
-// This is sample data.
-const data = {
-  user: {
-    name: "User",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  calendars: [
-    {
-      name: "My Calendars",
-      items: ["Personal", "Work", "Family"],
-    },
-    {
-      name: "Favorites",
-      items: ["Holidays", "Birthdays"],
-    },
-    {
-      name: "Other",
-      items: ["Travel", "Reminders", "Deadlines"],
-    },
-  ],
-}
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth()
+
+  const userData = {
+    name: user?.displayName || user?.email?.split('@')[0] || "User",
+    email: user?.email || "user@example.com",
+    avatar: user?.photoURL || "/avatars/shadcn.jpg",
+  }
+
   return (
     <Sidebar {...props}>
       <SidebarHeader className="border-sidebar-border h-16 border-b">
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarHeader>
       <SidebarContent>
-        
+        <SidebarGroup>
+          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard?view=filament">
+                  <LayoutGrid />
+                  <span>Filament</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard?view=printers">
+                  <PrinterIcon />
+                  <span>Printers</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <Link href="/dashboard?view=sync">
+                  <RefreshCw />
+                  <span>Sync</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         <SidebarSeparator className="mx-0" />
-        
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton>
+            {/* <SidebarMenuButton>
               <Plus />
               <span>New Filament</span>
-            </SidebarMenuButton>
+            </SidebarMenuButton> */}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

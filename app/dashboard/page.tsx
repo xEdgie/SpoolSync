@@ -1,3 +1,5 @@
+"use client"
+
 import { AppSidebar } from "@/components/app-sidebar"
 import {
   Breadcrumb,
@@ -11,78 +13,96 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar"
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-    Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { ProfileGrid } from "@/components/profile-grid"
+import { PrintersTable } from "@/components/printers-table"
+import { SyncView } from "@/components/sync-view"
+import { FilamentProfile } from "@/types/profile"
+import { useState, Suspense, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
+
+const MOCK_DATA: FilamentProfile[] = []
+
+function DashboardContent() {
+  const searchParams = useSearchParams()
+  const view = searchParams.get("view") || "filament"
+  const [data, setData] = useState<FilamentProfile[]>(MOCK_DATA)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [currentView, setCurrentView] = useState(view)
+
+  // Handle view transitions with a brief loading state
+  useEffect(() => {
+    if (view !== currentView) {
+      setIsTransitioning(true)
+      const timer = setTimeout(() => {
+        setCurrentView(view)
+        setIsTransitioning(false)
+      }, 50) // Brief delay to prevent flash
+      return () => clearTimeout(timer)
+    }
+  }, [view, currentView])
+
+  const renderView = () => {
+    if (isTransitioning) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      )
+    }
+
+    switch (currentView) {
+      case "printers":
+        return <PrintersTable />
+      case "sync":
+        return <SyncView />
+      default:
+        return <ProfileGrid data={data} setData={setData} />
+    }
+  }
+
+  const getBreadcrumbTitle = () => {
+    switch (currentView) {
+      case "printers":
+        return "Printers"
+      case "sync":
+        return "Sync"
+      default:
+        return "Filament Profiles"
+    }
+  }
+
+  return (
+    <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+            <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator
+                    orientation="vertical"
+                    className="mr-2 data-[orientation=vertical]:h-4"
+                />
+                <Breadcrumb>
+                    <BreadcrumbList>
+                    <BreadcrumbItem>
+                        <BreadcrumbPage>
+                          {getBreadcrumbTitle()}
+                        </BreadcrumbPage>
+                    </BreadcrumbItem>
+                    </BreadcrumbList>
+                </Breadcrumb>
+            </header>
+            <div className="flex flex-1 flex-col gap-4 p-4 bg-background">
+                {renderView()}
+            </div>
+        </SidebarInset>
+    </SidebarProvider>
+  )
+}
 
 export default function Page() {
   return (
-    <>
-        <SidebarProvider>
-            <AppSidebar />
-            <SidebarInset>
-                <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator
-                        orientation="vertical"
-                        className="mr-2 data-[orientation=vertical]:h-4"
-                    />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                        <BreadcrumbItem>
-                            <BreadcrumbPage>October 2024</BreadcrumbPage>
-                        </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
-                </header>
-                <div className="flex flex-1 flex-col gap-4 p-4">
-                    
-                    <Table className="text-center">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[100px] text-center">Brand</TableHead>
-                                <TableHead className="w-[100px] text-center">Colour</TableHead>
-                                <TableHead className="w-[100px] text-center">Type</TableHead>
-                                <TableHead className="w-[100px] text-center">Cost /kg</TableHead>
-                                <TableHead className="w-[100px] text-center">Flow %</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow className="hover:bg-background">
-                                <TableCell className="border-1">
-                                    <Popover>
-                                        <PopoverTrigger>
-                                                TwoTrees
-                                        </PopoverTrigger>
-                                        <PopoverContent>
-                                            <Input></Input>
-                                        </PopoverContent>
-                                    </Popover>
-                                </TableCell>
-                                <TableCell>Black</TableCell>
-                                <TableCell>PLA</TableCell>
-                                <TableCell>R299</TableCell>
-                                <TableCell>98%</TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </div>
-            </SidebarInset>
-        </SidebarProvider>
-    </>
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   )
 }
