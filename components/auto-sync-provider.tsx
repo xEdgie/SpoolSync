@@ -1,112 +1,153 @@
-"use client"
+/** @format */
 
-import { useEffect, useRef } from "react"
-import { FilamentProfile } from "@/types/profile"
-import { db } from "@/lib/firebase"
-import { collection, onSnapshot, query } from "firebase/firestore"
-import { useAuth } from "@/components/auth-provider"
-import { generateFilamentJson } from "@/lib/orcaslicer"
+"use client";
+
+import { useEffect, useRef } from "react";
+import { FilamentProfile } from "@/types/profile";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query } from "firebase/firestore";
+import { useAuth } from "@/components/auth-provider";
+import { generateFilamentJson } from "@/lib/orcaslicer";
 
 export function AutoSyncProvider() {
-  const { user } = useAuth()
-  const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastSyncedProfilesRef = useRef<string>("")
+	const { user } = useAuth();
+	const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const lastSyncedProfilesRef = useRef<string>("");
 
-  useEffect(() => {
-    if (!user || !window.electron) return
+	useEffect(() => {
+		if (!user || !window.electron) return;
 
-    // Check if auto-sync is enabled
-    const autoSyncEnabled = localStorage.getItem("autoSyncEnabled") === "true"
-    if (!autoSyncEnabled) return
+		// Check if auto-sync is enabled
+		const autoSyncEnabled =
+			localStorage.getItem("autoSyncEnabled") === "true";
+		console.log("Auto-sync enabled:", autoSyncEnabled);
+		if (!autoSyncEnabled) return;
 
-    const q = query(collection(db, "users", user.uid, "filaments"))
-    const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-      const profiles: FilamentProfile[] = []
-      querySnapshot.forEach((doc) => {
-        profiles.push({ id: doc.id, ...doc.data() } as FilamentProfile)
-      })
+		const q = query(collection(db, "users", user.uid, "filaments"));
+		const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+			const profiles: FilamentProfile[] = [];
+			querySnapshot.forEach((doc) => {
+				profiles.push({ id: doc.id, ...doc.data() } as FilamentProfile);
+			});
 
-      // Create a hash of current profiles to detect changes
-      const profilesHash = JSON.stringify(
-        profiles.map(p => ({ id: p.id, brand: p.brand, type: p.type, color: p.color, costPerKg: p.costPerKg, flowRatio: p.flowRatio }))
-      )
+			// Create a hash of current profiles to detect changes
+			const profilesHash = JSON.stringify(
+				profiles.map((p) => ({
+					id: p.id,
+					brand: p.brand,
+					type: p.type,
+					color: p.color,
+					costPerKg: p.costPerKg,
+					flowRatio: p.flowRatio,
+					initialNozzleTemp: p.initialNozzleTemp,
+					nozzleTemp: p.nozzleTemp,
+					initialBedTemp: p.initialBedTemp,
+					bedTemp: p.bedTemp,
+					printerId: p.printerId,
+					printerName: p.printerName,
+          retractionLength: p.retractionLength,
+          zhopHeight: p.zhopHeight,
+          zhopType: p.zhopType,
+				}))
+			);
 
-      // Only sync if profiles actually changed
-      if (profilesHash === lastSyncedProfilesRef.current) {
-        return
-      }
+			// Only sync if profiles actually changed
+			if (profilesHash === lastSyncedProfilesRef.current) {
+				console.log("No changes detected, skipping sync");
+				return;
+			}
 
-      lastSyncedProfilesRef.current = profilesHash
+			console.log("Profile changes detected, scheduling sync...");
 
-      // Debounce the sync operation
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current)
-      }
+			lastSyncedProfilesRef.current = profilesHash;
 
-      syncTimeoutRef.current = setTimeout(async () => {
-        await performSync(profiles)
-      }, 1000) // 1 second debounce
-    })
+			// Debounce the sync operation
+			if (syncTimeoutRef.current) {
+				clearTimeout(syncTimeoutRef.current);
+			}
 
-    return () => {
-      unsubscribe()
-      if (syncTimeoutRef.current) {
-        clearTimeout(syncTimeoutRef.current)
-      }
-    }
-  }, [user])
+			syncTimeoutRef.current = setTimeout(async () => {
+				await performSync(profiles);
+			}, 1000); // 1 second debounce
+		});
 
-  const performSync = async (profiles: FilamentProfile[]) => {
-    if (!window.electron) return
+		return () => {
+			unsubscribe();
+			if (syncTimeoutRef.current) {
+				clearTimeout(syncTimeoutRef.current);
+			}
+		};
+	}, [user]);
 
-    try {
-      const homeDir = await window.electron.getHomeDir()
-      const baseDir = localStorage.getItem("orcaSlicerPath") || `${homeDir}/Library/Application Support/OrcaSlicer`
-      let targetDir = await window.electron.joinPath(baseDir, "user", "default", "filament")
-      const exists = await window.electron.checkDirExists(targetDir)
-      
-      if (!exists) {
-        targetDir = baseDir
-      }
+	const performSync = async (profiles: FilamentProfile[]) => {
+		if (!window.electron) return;
 
-      // Get list of existing test_ files
-      const existingFiles = await window.electron.readDir(targetDir)
-      const existingTestFiles = existingFiles.filter(f => f.startsWith("test_") && f.endsWith(".json"))
+		try {
+			const homeDir = await window.electron.getHomeDir();
+			const baseDir =
+				localStorage.getItem("orcaSlicerPath") ||
+				`${homeDir}/Library/Application Support/OrcaSlicer`;
+			let targetDir = await window.electron.joinPath(
+				baseDir,
+				"user",
+				"default",
+				"filament"
+			);
+			const exists = await window.electron.checkDirExists(targetDir);
 
-      // Create set of expected filenames based on current profiles
-      const expectedFiles = new Set(
-        profiles.map(profile => 
-          `test_${profile.brand}_${profile.type}.json`.replace(/\s+/g, '_')
-        )
-      )
+			if (!exists) {
+				targetDir = baseDir;
+			}
 
-      // Delete orphaned files (files that exist but shouldn't)
-      for (const existingFile of existingTestFiles) {
-        if (!expectedFiles.has(existingFile)) {
-          const filePath = await window.electron.joinPath(targetDir, existingFile)
-          await window.electron.deleteFile(filePath)
-          console.log(`Deleted orphaned file: ${existingFile}`)
-        }
-      }
+			// Get list of existing SpoolSync files
+			const existingFiles = await window.electron.readDir(targetDir);
+			const existingSpoolSyncFiles = existingFiles.filter(
+				(f) => f.startsWith("SpoolSync") && f.endsWith(".json")
+			);
 
-      // Write/update all current profile files
-      for (const profile of profiles) {
-        const jsonContent = generateFilamentJson(profile)
-        const fileName = `test_${profile.brand}_${profile.type}.json`.replace(/\s+/g, '_')
-        const filePath = await window.electron.joinPath(targetDir, fileName)
-        
-        await window.electron.writeFile(filePath, jsonContent)
-      }
+			// Create set of expected filenames based on current profiles
+			const expectedFiles = new Set(
+				profiles.map(
+					(profile) =>
+						`SpoolSync ${profile.brand} ${profile.type}.json`
+				)
+			);
 
-      // Update last sync time in localStorage
-      localStorage.setItem("lastSyncTime", new Date().toISOString())
-      
-      console.log(`Auto-synced ${profiles.length} profiles`)
-    } catch (error) {
-      console.error("Auto-sync failed:", error)
-    }
-  }
+			// Delete orphaned files (files that exist but shouldn't)
+			for (const existingFile of existingSpoolSyncFiles) {
+				if (!expectedFiles.has(existingFile)) {
+					const filePath = await window.electron.joinPath(
+						targetDir,
+						existingFile
+					);
+					await window.electron.deleteFile(filePath);
+					console.log(`Deleted orphaned file: ${existingFile}`);
+				}
+			}
 
-  // This component doesn't render anything
-  return null
+			// Write/update all current profile files
+			for (const profile of profiles) {
+				const jsonContent = generateFilamentJson(profile);
+				const fileName = `SpoolSync ${profile.brand} ${profile.type}.json`;
+				const filePath = await window.electron.joinPath(
+					targetDir,
+					fileName
+				);
+
+				await window.electron.writeFile(filePath, jsonContent);
+			}
+
+			// Update last sync time in localStorage
+			localStorage.setItem("lastSyncTime", new Date().toISOString());
+
+			console.log(
+				`✅ Auto-synced ${profiles.length} profiles to ${targetDir}`
+			);
+		} catch (error) {
+			console.error("❌ Auto-sync failed:", error);
+		}
+	};
+
+	// This component doesn't render anything
+	return null;
 }

@@ -116,14 +116,14 @@ export function SyncView() {
         targetDir = baseDir
       }
 
-      // Get list of existing test_ files
+      // Get list of existing SpoolSync files
       const existingFiles = await window.electron.readDir(targetDir)
-      const existingTestFiles = existingFiles.filter(f => f.startsWith("test_") && f.endsWith(".json"))
+      const existingTestFiles = existingFiles.filter(f => f.startsWith("SpoolSync") && f.endsWith(".json"))
 
       // Create set of expected filenames based on current profiles
       const expectedFiles = new Set(
         profilesToSync.map(profile => 
-          `test_${profile.brand}_${profile.type}.json`.replace(/\s+/g, '_')
+          `SpoolSync ${profile.brand} ${profile.type}.json`
         )
       )
 
@@ -141,7 +141,7 @@ export function SyncView() {
       let successCount = 0
       for (const profile of profilesToSync) {
         const jsonContent = generateFilamentJson(profile)
-        const fileName = `test_${profile.brand}_${profile.type}.json`.replace(/\s+/g, '_')
+        const fileName = `SpoolSync ${profile.brand} ${profile.type}.json`
         const filePath = await window.electron.joinPath(targetDir, fileName)
         
         const written = await window.electron.writeFile(filePath, jsonContent)
@@ -150,8 +150,8 @@ export function SyncView() {
 
       if (showStatus) {
         const message = deletedCount > 0 
-          ? `Successfully synced ${successCount} profiles and removed ${deletedCount} orphaned files`
-          : `Successfully synced ${successCount} profiles to ${targetDir}`
+          ? `Successfully synced and replaced ${successCount} profiles`
+          : `Successfully synced ${successCount} profiles`
         setSyncStatus({
           success: true,
           message
@@ -271,7 +271,7 @@ export function SyncView() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Local Files (Test)</CardTitle>
+                <CardTitle>Local Files</CardTitle>
                 <CardDescription>Files in your OrcaSlicer directory</CardDescription>
             </CardHeader>
             <CardContent>
