@@ -9,8 +9,10 @@ import { generateFilamentJson } from "@/lib/orcaslicer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { RefreshCw, FileJson, CheckCircle2, AlertCircle } from "lucide-react"
+import { RefreshCw, FileJson, CheckCircle2, AlertCircle, Zap } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 
 export function SyncView() {
   const [profiles, setProfiles] = useState<FilamentProfile[]>([])
@@ -18,6 +20,8 @@ export function SyncView() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncStatus, setSyncStatus] = useState<{ success: boolean; message: string } | null>(null)
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false)
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null)
   const { user } = useAuth()
 
   const fetchLocalFiles = async () => {
@@ -56,6 +60,26 @@ export function SyncView() {
   useEffect(() => {
     if (!user) return
 
+    // Load auto-sync preference from localStorage
+    const savedAutoSync = localStorage.getItem("autoSyncEnabled")
+    if (savedAutoSync === "true") {
+      setAutoSyncEnabled(true)
+    }
+
+    // Load last sync time from localStorage
+    const savedLastSyncTime = localStorage.getItem("lastSyncTime")
+    if (savedLastSyncTime) {
+      setLastSyncTime(new Date(savedLastSyncTime))
+    }
+
+    // Poll for last sync time updates every second
+    const pollInterval = setInterval(() => {
+      const currentLastSyncTime = localStorage.getItem("lastSyncTime")
+      if (currentLastSyncTime) {
+        setLastSyncTime(new Date(currentLastSyncTime))
+      }
+    }, 1000)
+
     const q = query(collection(db, "users", user.uid, "filaments"))
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const profilesData: FilamentProfile[] = []
@@ -68,14 +92,19 @@ export function SyncView() {
 
     fetchLocalFiles()
 
-    return () => unsubscribe()
+    return () => {
+      unsubscribe()
+      clearInterval(pollInterval)
+    }
   }, [user])
 
-  const handleSync = async () => {
-    if (!window.electron || profiles.length === 0) return
-    
-    setIsSyncing(true)
-    setSyncStatus(null)
+  const performSync = async (profilesToSync: FilamentProfile[] = profiles, showStatus: boolean = false) => {
+    if (!window.electron) return
+
+    if (showStatus) {
+      setIsSyncing(true)
+      setSyncStatus(null)
+    }
 
     try {
       const homeDir = await window.electron.getHomeDir()
@@ -84,17 +113,34 @@ export function SyncView() {
       const exists = await window.electron.checkDirExists(targetDir)
       
       if (!exists) {
-          // Try creating? Or fallback.
-          // If we can't find the exact folder, maybe we shouldn't write blindly.
-          // But for this "test" phase, let's write to the configured path if the deep one fails.
-          targetDir = baseDir
+        targetDir = baseDir
       }
 
+      // Get list of existing test_ files
+      const existingFiles = await window.electron.readDir(targetDir)
+      const existingTestFiles = existingFiles.filter(f => f.startsWith("test_") && f.endsWith(".json"))
+
+      // Create set of expected filenames based on current profiles
+      const expectedFiles = new Set(
+        profilesToSync.map(profile => 
+          `test_${profile.brand}_${profile.type}.json`.replace(/\s+/g, '_')
+        )
+      )
+
+      // Delete orphaned files (files that exist but shouldn't)
+      let deletedCount = 0
+      for (const existingFile of existingTestFiles) {
+        if (!expectedFiles.has(existingFile)) {
+          const filePath = await window.electron.joinPath(targetDir, existingFile)
+          const deleted = await window.electron.deleteFile(filePath)
+          if (deleted) deletedCount++
+        }
+      }
+
+      // Write/update all current profile files
       let successCount = 0
-      
-      for (const profile of profiles) {
+      for (const profile of profilesToSync) {
         const jsonContent = generateFilamentJson(profile)
-        // Safety: Prefix with test_
         const fileName = `test_${profile.brand}_${profile.type}.json`.replace(/\s+/g, '_')
         const filePath = await window.electron.joinPath(targetDir, fileName)
         
@@ -102,21 +148,47 @@ export function SyncView() {
         if (written) successCount++
       }
 
-      setSyncStatus({
-        success: true,
-        message: `Successfully synced ${successCount} profiles to ${targetDir}`
-      })
+      if (showStatus) {
+        const message = deletedCount > 0 
+          ? `Successfully synced ${successCount} profiles and removed ${deletedCount} orphaned files`
+          : `Successfully synced ${successCount} profiles to ${targetDir}`
+        setSyncStatus({
+          success: true,
+          message
+        })
+      }
       
-      await fetchLocalFiles() // Refresh list
+      const now = new Date()
+      setLastSyncTime(now)
+      localStorage.setItem("lastSyncTime", now.toISOString())
+      await fetchLocalFiles()
     } catch (error) {
       console.error("Sync failed:", error)
-      setSyncStatus({
-        success: false,
-        message: "Failed to sync profiles. Check console for details."
-      })
+      if (showStatus) {
+        setSyncStatus({
+          success: false,
+          message: "Failed to sync profiles. Check console for details."
+        })
+      }
     } finally {
-      setIsSyncing(false)
+      if (showStatus) {
+        setIsSyncing(false)
+      }
     }
+  }
+
+  const handleAutoSyncToggle = (enabled: boolean) => {
+    setAutoSyncEnabled(enabled)
+    localStorage.setItem("autoSyncEnabled", enabled.toString())
+    
+    if (enabled && profiles.length > 0) {
+      // Immediately sync when enabling
+      performSync(profiles, false)
+    }
+  }
+
+  const handleSync = async () => {
+    await performSync(profiles, true)
   }
 
   if (isLoading) {
@@ -131,12 +203,31 @@ export function SyncView() {
             <p className="text-muted-foreground">
                 Sync your cloud profiles to your local OrcaSlicer configuration.
             </p>
+            {lastSyncTime && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Last synced: {lastSyncTime.toLocaleTimeString()}
+              </p>
+            )}
         </div>
-        <Button onClick={handleSync} disabled={isSyncing}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-          {isSyncing ? 'Syncing...' : 'Sync Test Files'}
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="auto-sync"
+              checked={autoSyncEnabled}
+              onCheckedChange={handleAutoSyncToggle}
+            />
+            <Label htmlFor="auto-sync" className="flex items-center gap-1 cursor-pointer">
+              <Zap className={`h-4 w-4 ${autoSyncEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+              Auto-Sync
+            </Label>
+          </div>
+          <Button onClick={handleSync} disabled={isSyncing}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Manual Sync'}
+          </Button>
+        </div>
       </div>
+
 
       {syncStatus && (
         <div className={`p-4 rounded-md flex items-center gap-2 ${syncStatus.success ? 'bg-green-500/15 text-green-600' : 'bg-destructive/15 text-destructive'}`}>

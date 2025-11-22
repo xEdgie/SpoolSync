@@ -22,11 +22,22 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { FilamentProfile } from "@/types/profile"
-import { Plus, ArrowUpDown } from "lucide-react"
+import { Plus, ArrowUpDown, Trash2 } from "lucide-react"
 import { db } from "@/lib/firebase"
-import { collection, addDoc, updateDoc, doc, onSnapshot, query } from "firebase/firestore"
+import { collection, addDoc, updateDoc, doc, onSnapshot, query, deleteDoc } from "firebase/firestore"
 import { useAuth } from "@/components/auth-provider"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
 import {
   Select,
@@ -47,6 +58,7 @@ export function ProfileGrid({ data, setData }: ProfileGridProps) {
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [isLoading, setIsLoading] = React.useState(true)
   const [printers, setPrinters] = React.useState<Printer[]>([])
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
   const { user } = useAuth()
 
   React.useEffect(() => {
@@ -81,6 +93,21 @@ export function ProfileGrid({ data, setData }: ProfileGridProps) {
       if (!user) return
       const docRef = doc(db, "users", user.uid, "filaments", id)
       await updateDoc(docRef, { [field]: value })
+  }
+
+  const deleteProfile = async (profile: FilamentProfile) => {
+    if (!user) return
+    
+    setDeletingId(profile.id)
+    
+    try {
+      // Delete from Firestore - auto-sync will handle file deletion
+      await deleteDoc(doc(db, "users", user.uid, "filaments", profile.id))
+    } catch (error) {
+      console.error("Failed to delete profile:", error)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const columns: ColumnDef<FilamentProfile>[] = [
@@ -251,6 +278,55 @@ export function ProfileGrid({ data, setData }: ProfileGridProps) {
             onBlur={onBlur}
             className="h-8 w-full border-none bg-transparent p-0 focus-visible:ring-0"
           />
+        )
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const profile = row.original
+        
+        return (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                disabled={deletingId === profile.id}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Filament Profile?</AlertDialogTitle>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-3">
+                    <p>
+                      Are you sure you want to delete <strong>{profile.brand} {profile.type}</strong>?
+                    </p>
+                    <p className="text-destructive font-medium">
+                      This will permanently delete both the cloud profile and the local JSON file from your OrcaSlicer directory.
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      This action cannot be undone.
+                    </p>
+                  </div>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteProfile(profile)}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         )
       },
     },

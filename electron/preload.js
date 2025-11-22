@@ -7,4 +7,5 @@ contextBridge.exposeInMainWorld('electron', {
   readDir: (path) => ipcRenderer.invoke('read-dir', path),
   writeFile: (path, content) => ipcRenderer.invoke('write-file', path, content),
   joinPath: (...args) => ipcRenderer.invoke('join-path', ...args),
+  deleteFile: (path) => ipcRenderer.invoke('delete-file', path),
 });

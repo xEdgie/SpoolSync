@@ -16,6 +16,7 @@ import {
 import { ProfileGrid } from "@/components/profile-grid"
 import { PrintersTable } from "@/components/printers-table"
 import { SyncView } from "@/components/sync-view"
+import { AutoSyncProvider } from "@/components/auto-sync-provider"
 import { FilamentProfile } from "@/types/profile"
 import { useState, Suspense, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
@@ -73,6 +74,7 @@ function DashboardContent() {
 
   return (
     <SidebarProvider>
+        <AutoSyncProvider />
         <AppSidebar />
         <SidebarInset>
             <header className="bg-background sticky top-0 flex h-16 shrink-0 items-center gap-2 border-b px-4">

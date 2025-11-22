@@ -77,6 +77,16 @@ app.on('ready', () => {
   ipcMain.handle('join-path', async (event, ...args) => {
     return path.join(...args);
   });
+
+  ipcMain.handle('delete-file', async (event, filePath) => {
+    try {
+      await fs.promises.unlink(filePath);
+      return true;
+    } catch (error) {
+      console.error('Error deleting file:', error);
+      return false;
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
