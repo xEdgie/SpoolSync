@@ -13,6 +13,7 @@ import {
 	LayoutGrid,
 	PrinterIcon,
 	RefreshCw,
+	Wrench,
 } from "lucide-react";
 
 import { NavUser } from "@/components/nav-user";
@@ -70,6 +71,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 								<Link href="/dashboard?view=sync">
 									<RefreshCw />
 									<span>Sync</span>
+								</Link>
+							</SidebarMenuButton>
+						</SidebarMenuItem>
+						<SidebarMenuItem>
+							<SidebarMenuButton asChild>
+								<Link href="/dashboard?view=tune">
+									<Wrench />
+									<span>Tuning</span>
 								</Link>
 							</SidebarMenuButton>
 						</SidebarMenuItem>

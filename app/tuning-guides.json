@@ -1,0 +1,49 @@
+
+{   
+    "data":[
+        {
+            "id": "temp",
+            "name": "Temperature Calibration",
+            "description": "Calibrate the optimal printing temperature for your filament",
+            "intro": "Calibrating the optimal printing temperature for your filament is a crucial step in ensuring the best possible print quality. By following this guide, you'll learn how to calibrate the optimal printing temperature for your filament using OrcaSlicer.", 
+            "image": "Logo",
+            "steps": [
+                {
+                    "step": 1,
+                    "title": "Getting Started",
+                    "description": "Lets get started by opening OrcaSlicer and creating a new project, then selecting the filament we want to calibrate inside of OrcaSlicer.",
+                    "select": "filament"
+                },
+                {
+                    "step": 2,
+                    "title": "Print A Temperature Tower",
+                    "description": "Printing a temperature tower will help you calibrate the optimal printing temperature for your filament. Inside of OrcaSlicer, create a new project > select calibration > temperature.",
+                    "image": "@/assets/logo-alt.png"
+                },
+                {
+                    "step": 3,
+                    "title": "Enter Your Optimal Temperature",
+                    "description": "After examining your temperature tower print, determine which temperature section produced the best results and enter that temperature below.",
+                    "input": true,
+                    "inputLabel": "Optimal Temperature (°C)",
+                    "inputType": "number",
+                    "inputPlaceholder": "e.g., 210"
+                }
+            ]
+        },
+        {
+            "id": "flow",
+            "name": "Flow Calibration",
+            "description": "Calibrate the optimal flow for your filament",
+            "image": "Logo",
+            "steps": [
+                {
+                    "step": 1,
+                    "title": "Calibrate the optimal flow for your filament",
+                    "description": "Calibrate the optimal printing flow for your filament",
+                    "image": "@/assets/logo-alt.png"
+                }
+            ]
+        }
+    ]
+}

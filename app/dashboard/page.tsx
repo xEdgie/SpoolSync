@@ -18,6 +18,7 @@ import {
 import { ProfileGrid } from "@/components/filament-grid";
 import { PrintersTable } from "@/components/printers-table";
 import { SyncView } from "@/components/sync-view";
+import { TuningView } from "@/components/tuning-view";
 import { AutoSyncProvider } from "@/components/auto-sync-provider";
 import { FilamentProfile } from "@/types/profile";
 import { useState, Suspense, useEffect } from "react";
@@ -58,6 +59,8 @@ function DashboardContent() {
 				return <PrintersTable />;
 			case "sync":
 				return <SyncView />;
+			case "tune":
+				return <TuningView />;
 			default:
 				return <ProfileGrid data={data} setData={setData} />;
 		}
@@ -69,6 +72,8 @@ function DashboardContent() {
 				return "Printers";
 			case "sync":
 				return "Sync";
+			case "tune":
+				return "Tune";
 			default:
 				return "Filaments";
 		}
