@@ -240,7 +240,7 @@ export function SyncView() {
         <Card>
             <CardHeader>
                 <CardTitle>Cloud Profiles</CardTitle>
-                <CardDescription>{profiles.length} profiles ready to sync</CardDescription>
+                <CardDescription>All of your synced profiles</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
