@@ -41,7 +41,7 @@ export function generateFilamentJson(profile: FilamentProfile): string {
 		filament_settings_id: [`${profile.brand} ${profile.type}`],
 		from: "User",
 		inherits: "Generic PLA", // Could be dynamic
-		is_custom_defined: "1",
+		is_custom_defined: "0",
 		name: `${profile.brand} ${profile.type}`,
 		version: "1.0.0.0",
 		
