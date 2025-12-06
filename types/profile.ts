@@ -1,18 +1,45 @@
 /** @format */
 
 export interface FilamentProfile {
+	// Filament Basic
 	id: string;
-	printerId?: string;
 	printerName?: string;
+	printerId?: string;
 	brand: string;
 	color: string; // Hex code or name
 	type: "PLA" | "PETG" | "ABS" | "ASA" | "TPU" | string;
 	costPerKg: number;
+	isSupportMaterial: boolean;
+	diameter: number;
+	density: number;
+	shrinkageXY: number;
+	shrinkageZ: number;
+	nozzleTempRangeLow: number;
+	nozzleTempRangeHigh: number;
+	
+	// Filament Flow and Preasure Advance
+	flowRatio: number;
+	enablePressureAdvance: boolean;
+	pressureAdvance: number;
+	
+	//Filament Chamber Temperature
+	chamberTemp: number;
+	chamberTempControl: boolean;
+	
+	// Filament Print Temperature
 	initialNozzleTemp: number;
 	nozzleTemp: number;
+	
+	// Filament Bed Temperature
 	initialBedTemp: number;
 	bedTemp: number;
-	flowRatio: number;
+
+	// Filament Cooling
+	fanSpeedMin?: number;
+	fanSpeedMax?: number;
+	minFanSpeedLayerTime?: number;
+	
+	// Overrides Retraction
 	retractionLength: number;
 	zhopHeight: number;
 	zhopType:
@@ -21,13 +48,6 @@ export interface FilamentProfile {
 		| "Slope Lift"
 		| "Spiral Lift"
 		| string;
-	// Cooling
-	fanSpeedMin?: number;
-	fanSpeedMax?: number;
-	minFanSpeedLayerTime?: number;
-
-	// Pressure Advance
-	pressureAdvance?: number;
-
-	// Add other OrcaSlicer specific fields as needed later
+	retractLiftAbove: number;
+	retractLiftBelow: number;
 }
