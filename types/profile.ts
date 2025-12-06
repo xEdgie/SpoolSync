@@ -1,53 +1,48 @@
 /** @format */
 
 export interface FilamentProfile {
-	// Filament Basic
-	id: string;
-	printerName?: string;
-	printerId?: string;
-	brand: string;
-	color: string; // Hex code or name
-	type: "PLA" | "PETG" | "ABS" | "ASA" | "TPU" | string;
-	costPerKg: number;
-	isSupportMaterial: boolean;
-	diameter: number;
-	density: number;
-	shrinkageXY: number;
-	shrinkageZ: number;
-	nozzleTempRangeLow: number;
-	nozzleTempRangeHigh: number;
-	
-	// Filament Flow and Preasure Advance
-	flowRatio: number;
-	enablePressureAdvance: boolean;
-	pressureAdvance: number;
-	
-	//Filament Chamber Temperature
-	chamberTemp: number;
-	chamberTempControl: boolean;
-	
-	// Filament Print Temperature
-	initialNozzleTemp: number;
-	nozzleTemp: number;
-	
-	// Filament Bed Temperature
-	initialBedTemp: number;
-	bedTemp: number;
+  // Filament Basic
+  id: string;
+  printerName?: string;
+  printerId?: string;
+  brand: string;
+  color: string; // Hex code or name
+  type: "PLA" | "PETG" | "ABS" | "ASA" | "TPU" | string;
+  costPerKg: string;
+  isSupportMaterial: boolean;
+  diameter: string;
+  density: string;
+  shrinkageXY: string;
+  shrinkageZ: string;
+  nozzleTempRangeLow: string;
+  nozzleTempRangeHigh: string;
 
-	// Filament Cooling
-	fanSpeedMin?: number;
-	fanSpeedMax?: number;
-	minFanSpeedLayerTime?: number;
-	
-	// Overrides Retraction
-	retractionLength: number;
-	zhopHeight: number;
-	zhopType:
-		| "Auto Lift"
-		| "Normal Lift"
-		| "Slope Lift"
-		| "Spiral Lift"
-		| string;
-	retractLiftAbove: number;
-	retractLiftBelow: number;
+  // Filament Flow and Preasure Advance
+  flowRatio: string;
+  enablePressureAdvance: boolean;
+  pressureAdvance: string;
+
+  //Filament Chamber Temperature
+  chamberTemp: string;
+  chamberTempControl: boolean;
+
+  // Filament Print Temperature
+  initialNozzleTemp: string;
+  nozzleTemp: string;
+
+  // Filament Bed Temperature
+  initialBedTemp: string;
+  bedTemp: string;
+
+  // Filament Cooling
+  fanSpeedMin: string;
+  fanSpeedMax: string;
+  minFanSpeedLayerTime: string;
+
+  // Overrides Retraction
+  retractionLength: string;
+  zhopHeight: string;
+  zhopType: "Auto Lift" | "Normal Lift" | "Slope Lift" | "Spiral Lift" | string;
+  retractLiftAbove: string;
+  retractLiftBelow: string;
 }
