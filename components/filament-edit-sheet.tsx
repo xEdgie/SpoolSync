@@ -324,7 +324,7 @@ export function FilamentEditSheet({
                             size="sm"
                             className="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:stroke-primary"
                             pressed={formData.enablePressureAdvance}
-                            onPressedChange={(pressed) =>
+                            onPressedChange={(pressed:boolean) =>
                               handleChange("enablePressureAdvance", pressed)
                             }
                           >
@@ -443,7 +443,7 @@ export function FilamentEditSheet({
                             size="sm"
                             className="data-[state=on]:bg-transparent data-[state=on]:*:[svg]:stroke-primary"
                             pressed={formData.chamberTempControl}
-                            onPressedChange={(pressed) =>
+                            onPressedChange={(pressed:boolean) =>
                               handleChange("chamberTempControl", pressed)
                             }
                           >
