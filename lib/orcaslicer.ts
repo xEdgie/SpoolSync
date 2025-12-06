@@ -57,7 +57,7 @@ export function generateFilamentJson(profile: FilamentProfile): string {
     inherits: "Generic PLA", // Could be dynamic
     is_custom_defined: "0",
     name: `${profile.brand} ${profile.type}`,
-    version: "1.0.0.0",
+    version: "2.3.1.0",
 
     // Filament Cooling
     fan_cooling_layer_time: [(profile.minFanSpeedLayerTime || "60").toString()],
