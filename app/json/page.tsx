@@ -1,37 +1,38 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { FilamentProfile } from "@/types/profile"
-import { db } from "@/lib/firebase"
-import { collection, onSnapshot, query } from "firebase/firestore"
-import { useAuth } from "@/components/auth-provider"
-import { generateFilamentJson } from "@/lib/orcaslicer"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useState, useEffect } from "react";
+import { FilamentProfile } from "@/types/filament";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot, query } from "firebase/firestore";
+import { useAuth } from "@/components/auth-provider";
+import { generateFilamentJson } from "@/lib/orcaslicer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function JsonDebugPage() {
-  const [profiles, setProfiles] = useState<FilamentProfile[]>([])
-  const [selectedProfile, setSelectedProfile] = useState<FilamentProfile | null>(null)
-  const { user } = useAuth()
+  const [profiles, setProfiles] = useState<FilamentProfile[]>([]);
+  const [selectedProfile, setSelectedProfile] =
+    useState<FilamentProfile | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (!user) return
+    if (!user) return;
 
-    const q = query(collection(db, "users", user.uid, "filaments"))
+    const q = query(collection(db, "users", user.uid, "filaments"));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const profilesData: FilamentProfile[] = []
+      const profilesData: FilamentProfile[] = [];
       querySnapshot.forEach((doc) => {
-        profilesData.push({ id: doc.id, ...doc.data() } as FilamentProfile)
-      })
-      setProfiles(profilesData)
+        profilesData.push({ id: doc.id, ...doc.data() } as FilamentProfile);
+      });
+      setProfiles(profilesData);
       if (profilesData.length > 0 && !selectedProfile) {
-        setSelectedProfile(profilesData[0])
+        setSelectedProfile(profilesData[0]);
       }
-    })
+    });
 
-    return () => unsubscribe()
-  }, [user])
+    return () => unsubscribe();
+  }, [user]);
 
   return (
     <div className="container mx-auto p-4 flex gap-4 h-[calc(100vh-2rem)]">
@@ -45,7 +46,9 @@ export default function JsonDebugPage() {
               {profiles.map((profile) => (
                 <Button
                   key={profile.id}
-                  variant={selectedProfile?.id === profile.id ? "default" : "ghost"}
+                  variant={
+                    selectedProfile?.id === profile.id ? "default" : "ghost"
+                  }
                   className="justify-start"
                   onClick={() => setSelectedProfile(profile)}
                 >
@@ -72,5 +75,5 @@ export default function JsonDebugPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

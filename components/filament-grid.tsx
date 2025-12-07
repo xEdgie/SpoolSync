@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { FilamentProfile } from "@/types/profile";
+import { FilamentProfile } from "@/types/filament";
 import { Plus, ArrowUpDown, Trash2, Edit } from "lucide-react";
 import { db } from "@/lib/firebase";
 import {
